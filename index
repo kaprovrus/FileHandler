@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Номенклатура: Блюда и товары</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { margin-bottom: 10px; }
+    input[type="file"] { margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    tr:nth-child(even) { background-color: #fafafa; }
+  </style>
+</head>
+<body>
+
+  <h2>Загрузите файл номенклатуры (.txt)</h2>
+  <input type="file" id="fileInput" accept=".txt">
+
+  <h3>Блюда и товары</h3>
+  <table id="itemsTable" hidden>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Код</th>
+        <th>Тип</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const text = event.target.result;
+        const jsonStart = text.indexOf('{');
+        const jsonEnd = text.lastIndexOf('}');
+        const jsonText = text.slice(jsonStart, jsonEnd + 1);
+
+        try {
+          const data = JSON.parse(jsonText);
+          const allObjects = findAllItems(data);
+
+          const itemTable = document.getElementById('itemsTable');
+          const itemTbody = itemTable.querySelector('tbody');
+          itemTbody.innerHTML = '';
+
+          allObjects.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${item.id || ''}</td>
+              <td>${item.name || ''}</td>
+              <td>${item.code || ''}</td>
+              <td>${item.paymentSubject || ''}</td>
+            `;
+            itemTbody.appendChild(row);
+          });
+
+          itemTable.hidden = false;
+
+        } catch (err) {
+          alert('Ошибка при разборе JSON:\n' + err.message);
+          console.error(err);
+        }
+      };
+
+      reader.readAsText(file);
+    });
+
+    function findAllItems(obj) {
+      let results = [];
+
+      function walk(node) {
+        if (Array.isArray(node)) {
+          node.forEach(walk);
+        } else if (typeof node === 'object' && node !== null) {
+          if (node.name && node.code && node.id && node.paymentSubject) {
+            results.push(node);
+          }
+          for (let key in node) {
+            walk(node[key]);
+          }
+        }
+      }
+
+      walk(obj);
+      return results;
+    }
+  </script>
+
+</body>
+</html>
