@@ -103,24 +103,25 @@
     });
 
     function findAllItems(obj) {
-      let results = [];
+  let results = [];
 
-      function walk(node) {
-        if (Array.isArray(node)) {
-          node.forEach(walk);
-        } else if (typeof node === 'object' && node !== null) {
-          if (node.name && node.code && node.id && node.paymentSubject) {
-            results.push(node);
-          }
-          for (let key in node) {
-            walk(node[key]);
-          }
+  function walk(node) {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+    } else if (typeof node === 'object' && node !== null) {
+      // Проверяем, что объект имеет нужные поля
+      if (node.name && node.code && node.id && node.paymentSubject) {
+        // Фильтр только для блюд (Dish)
+        if (node.productType === "Dish" || node.type === "Dish") {
+          results.push(node);
         }
       }
-
-      walk(obj);
-      return results;
+      for (let key in node) {
+        walk(node[key]);
+      }
     }
+  }
+
   </script>
 
 </body>
