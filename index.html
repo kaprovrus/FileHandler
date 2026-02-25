@@ -2,44 +2,15 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Номенклатура: Блюда и товары</title>
+  <title>Номенклатура: Блюда</title>
   <style>
-    body {
-      font-family: 'Calibri', sans-serif;
-      padding: 20px;
-      font-size: 10px;
-    }
-
-    h2, h3 {
-      font-weight: bold;
-    }
-
-    input[type="file"] {
-      margin-bottom: 20px;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-      font-family: 'Calibri', sans-serif;
-      font-size: 10pt;
-      font-weight: bold;
-    }
-
-    th, td {
-      border: 1px solid black;
-      padding: 6px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
+    body { font-family: 'Calibri', sans-serif; padding: 20px; font-size: 10px; }
+    h2, h3 { font-weight: bold; }
+    input[type="file"] { margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; font-size: 10pt; font-weight: bold; }
+    th, td { border: 1px solid black; padding: 6px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    tr:nth-child(even) { background-color: #fafafa; }
   </style>
 </head>
 <body>
@@ -47,7 +18,7 @@
   <h2>Загрузите файл номенклатуры (.txt)</h2>
   <input type="file" id="fileInput" accept=".txt">
 
-  <h3>Блюда и товары</h3>
+  <h3>Блюда</h3>
   <table id="itemsTable" hidden>
     <thead>
       <tr>
@@ -68,8 +39,14 @@
       const reader = new FileReader();
       reader.onload = function (event) {
         const text = event.target.result;
+
+        // Находим JSON в файле
         const jsonStart = text.indexOf('{');
         const jsonEnd = text.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) {
+          alert('Не удалось найти JSON в файле');
+          return;
+        }
         const jsonText = text.slice(jsonStart, jsonEnd + 1);
 
         try {
@@ -91,7 +68,7 @@
             itemTbody.appendChild(row);
           });
 
-          itemTable.hidden = false;
+          itemTable.hidden = allObjects.length === 0;
 
         } catch (err) {
           alert('Ошибка при разборе JSON:\n' + err.message);
@@ -103,25 +80,27 @@
     });
 
     function findAllItems(obj) {
-  let results = [];
+      let results = [];
 
-  function walk(node) {
-    if (Array.isArray(node)) {
-      node.forEach(walk);
-    } else if (typeof node === 'object' && node !== null) {
-      // Проверяем, что объект имеет нужные поля
-      if (node.name && node.code && node.id && node.paymentSubject) {
-        // Фильтр только для блюд (Dish)
-        if (node.productType === "Dish" || node.type === "Dish") {
-          results.push(node);
+      function walk(node) {
+        if (Array.isArray(node)) {
+          node.forEach(walk);
+        } else if (typeof node === 'object' && node !== null) {
+          if (node.name && node.code && node.id && node.paymentSubject) {
+            // Фильтр только для блюд
+            if (node.productType === "Dish" || node.type === "Dish") {
+              results.push(node);
+            }
+          }
+          for (let key in node) {
+            walk(node[key]);
+          }
         }
       }
-      for (let key in node) {
-        walk(node[key]);
-      }
-    }
-  }
 
+      walk(obj);
+      return results;
+    }
   </script>
 
 </body>
